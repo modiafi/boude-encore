@@ -251,8 +251,18 @@
     moveButton();
   });
 
-  // Bouton Non = victoire
+    // Bouton Non = victoire
   nonBtn.addEventListener('click', () => {
+    // Envoie une notification email via Formspree
+    fetch('https://formspree.io/f/mljrolja', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: JSON.stringify({
+        message: 'Elle a cliqué sur "Non" ! 🎉',
+        date: new Date().toLocaleString('fr-FR')
+      })
+    });
+
     mainScreen.style.display = 'none';
     finalScreen.style.display = 'flex';
   });
