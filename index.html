@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KdZ ✨</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg, #ffd6e8 0%, #ff9ec6 45%, #ff6fae 100%);
+    background-size: 200% 200%;
+    animation: bgShift 8s ease infinite;
+  }
+
+  @keyframes bgShift {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+    100% { background-position: 0% 0%; }
+  }
+
+  .container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .emoji {
+    font-size: 56px;
+    margin-bottom: 8px;
+    animation: bob 2.4s ease-in-out infinite;
+  }
+
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(-4deg); }
+  }
+
+  h1 {
+    color: #7a1f4d;
+    font-size: 26px;
+    margin: 0 0 4px 0;
+    max-width: 320px;
+    line-height: 1.3;
+  }
+
+  .sub {
+    color: #a3477e;
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  .btn-row {
+    position: relative;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 340px;
+    height: 60px;
+  }
+
+  button {
+    border: none;
+    border-radius: 999px;
+    padding: 14px 26px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    white-space: nowrap;
+  }
+
+  button:active { transform: scale(0.95); }
+
+  #non {
+    background: #ff4d6d;
+    color: white;
+  }
+
+  #oui {
+    background: #34c759;
+    color: white;
+    position: fixed;
+    z-index: 10;
+  }
+
+  .hint {
+    margin-top: 18px;
+    color: #a3477e;
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  .final-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    animation: popIn 0.4s ease;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .final-emoji {
+    font-size: 64px;
+    margin-bottom: 12px;
+  }
+
+  .final-screen h2 {
+    color: #7a1f4d;
+    font-size: 24px;
+    max-width: 320px;
+    line-height: 1.3;
+  }
+
+  .final-screen p {
+    color: #a3477e;
+    font-size: 15px;
+    max-width: 300px;
+  }
+
+  #retry {
+    margin-top: 20px;
+    background: #ff4d6d;
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="mainScreen">
+  <div class="emoji">🥺</div>
+  <h1 id="question">Est-ce qu'on est en guerre ?</h1>
+  <div class="sub">Sois honnête... 👀</div>
+
+  <div class="btn-row" id="btnRow">
+    <button id="non">Non</button>
+    <button id="oui">Oui</button>
+  </div>
+
+  <div class="hint">(clique sur ta réponse)</div>
+</div>
+
+<div class="final-screen" id="finalScreen">
+  <div class="final-emoji">🏳️</div>
+  <h2>Bon d'accord, on n'est plus en guerre 😂</h2>
+  <p>Merci d'avoir cliqué sur le bon bouton, ça n'a pas été facile pour toi je sais.</p>
+  <button id="retry">Recommencer</button>
+</div>
+
+<script>
+  const ouiBtn = document.getElementById('oui');
+  const nonBtn = document.getElementById('non');
+  const btnRow = document.getElementById('btnRow');
+  const mainScreen = document.getElementById('mainScreen');
+  const finalScreen = document.getElementById('finalScreen');
+  const retryBtn = document.getElementById('retry');
+
+  const dodgeMessages = [
+    "Oui",
+    "Essaie encore",
+    "Trop lent 😄",
+    "Nan nan nan",
+    "La sorcière... 🧙‍♀️",
+    "Presque !",
+    "Tu rigoles ?",
+    "Raté !",
+    "Encore raté 😭",
+    "Bouge pas... héhé"
+  ];
+  let msgIndex = 0;
+  let dodgeCount = 0;
+
+  function randomPositionNearButton() {
+    const margin = 70;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const btnW = ouiBtn.offsetWidth || 120;
+    const btnH = ouiBtn.offsetHeight || 50;
+
+    const x = margin + Math.random() * (w - btnW - margin * 2);
+    const y = margin + Math.random() * (h - btnH - margin * 2);
+    return { x, y };
+  }
+
+  function moveButton() {
+    const { x, y } = randomPositionNearButton();
+    ouiBtn.style.left = x + 'px';
+    ouiBtn.style.top = y + 'px';
+
+    dodgeCount++;
+    msgIndex = (msgIndex + 1) % dodgeMessages.length;
+    ouiBtn.textContent = dodgeMessages[msgIndex];
+
+    // Le bouton devient de plus en plus petit et vif au fil des essais
+    const scale = Math.max(0.75, 1 - dodgeCount * 0.02);
+    ouiBtn.style.transform = `scale(${scale})`;
+  }
+
+  // Position initiale du bouton "Oui" dans la ligne (avant de devenir fixed au premier mouvement)
+  function initOuiPosition() {
+    const rect = ouiBtn.getBoundingClientRect();
+    ouiBtn.style.left = rect.left + 'px';
+    ouiBtn.style.top = rect.top + 'px';
+  }
+
+  window.addEventListener('load', initOuiPosition);
+  window.addEventListener('resize', initOuiPosition);
+
+  // Détection approche souris (desktop)
+  let lastMove = 0;
+  document.addEventListener('mousemove', (e) => {
+    const now = Date.now();
+    if (now - lastMove < 60) return;
+    lastMove = now;
+
+    const rect = ouiBtn.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+
+    if (dist < 100) {
+      moveButton();
+    }
+  });
+
+  // Sur mobile : le bouton fuit dès qu'on essaie de le toucher (touchstart proche)
+  ouiBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    moveButton();
+  }, { passive: false });
+
+  // Empêche aussi le clic direct au cas où le doigt/souris l'attrape
+  ouiBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    moveButton();
+  });
+
+  // Bouton Non = victoire
+  nonBtn.addEventListener('click', () => {
+    mainScreen.style.display = 'none';
+    finalScreen.style.display = 'flex';
+  });
+
+  retryBtn.addEventListener('click', () => {
+    finalScreen.style.display = 'none';
+    mainScreen.style.display = 'flex';
+    ouiBtn.textContent = 'Oui';
+    ouiBtn.style.transform = 'scale(1)';
+    msgIndex = 0;
+    dodgeCount = 0;
+    initOuiPosition();
+  });
+</script>
+
+</body>
+</html>
